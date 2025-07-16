@@ -1047,7 +1047,7 @@ export default function ServicesPage() {
               </div>
             )}
           </div>
-
+        </div>
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Lista de Prestadores */}
           <div className="lg:col-span-2 space-y-6">
