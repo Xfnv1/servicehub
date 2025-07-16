@@ -2,49 +2,98 @@
 -- ServiceHub Database - Extensions and Custom Types
 -- =============================================================================
 -- This file creates all necessary extensions and custom types
--- Execute this FIRST before any other scripts
+-- Execute this FIRST before any other database files
 
--- Enable required extensions
+-- =============================================================================
+-- EXTENSIONS
+-- =============================================================================
+
+-- Enable UUID generation
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
-CREATE EXTENSION IF NOT EXISTS "postgis";
-CREATE EXTENSION IF NOT EXISTS "pg_trgm";
-CREATE EXTENSION IF NOT EXISTS "unaccent";
+
+-- Enable PostGIS for location data
+CREATE EXTENSION IF NOT EXISTS postgis;
+
+-- Enable full text search
+CREATE EXTENSION IF NOT EXISTS pg_trgm;
+
+-- Enable unaccent for better search
+CREATE EXTENSION IF NOT EXISTS unaccent;
 
 -- =============================================================================
--- CUSTOM ENUM TYPES
+-- CUSTOM TYPES
 -- =============================================================================
 
--- User type enumeration
-CREATE TYPE user_type AS ENUM ('cliente', 'prestador');
+-- User types
+CREATE TYPE user_type AS ENUM ('cliente', 'prestador', 'admin');
 
--- Service status enumeration with complete workflow
-CREATE TYPE service_status AS ENUM ('novo', 'proposta_enviada', 'aceito', 'em_andamento', 'concluido', 'cancelado');
+-- Service urgency levels
+CREATE TYPE urgency_level AS ENUM ('low', 'normal', 'high', 'urgent');
 
--- Proposal status enumeration
-CREATE TYPE proposal_status AS ENUM ('pending', 'accepted', 'rejected', 'expired');
+-- Service status
+CREATE TYPE service_status AS ENUM (
+    'draft',        -- Rascunho
+    'published',    -- Publicado
+    'assigned',     -- Atribuído a um prestador
+    'in_progress',  -- Em andamento
+    'completed',    -- Concluído
+    'cancelled',    -- Cancelado
+    'disputed'      -- Em disputa
+);
 
--- Notification type enumeration
-CREATE TYPE notification_type AS ENUM ('service_request', 'message', 'payment', 'review', 'system', 'proposal');
+-- Proposal status
+CREATE TYPE proposal_status AS ENUM (
+    'pending',      -- Aguardando resposta
+    'accepted',     -- Aceita
+    'rejected',     -- Rejeitada
+    'expired',      -- Expirada
+    'withdrawn'     -- Retirada pelo prestador
+);
 
--- Payment status enumeration
-CREATE TYPE payment_status AS ENUM ('pending', 'processing', 'completed', 'failed', 'refunded');
+-- Payment methods
+CREATE TYPE payment_method AS ENUM (
+    'credit_card',
+    'debit_card',
+    'pix',
+    'bank_transfer',
+    'cash'
+);
 
--- Payment method enumeration
-CREATE TYPE payment_method AS ENUM ('credit_card', 'debit_card', 'pix', 'bank_transfer');
+-- Payment status
+CREATE TYPE payment_status AS ENUM (
+    'pending',
+    'processing',
+    'completed',
+    'failed',
+    'refunded',
+    'cancelled'
+);
 
--- Urgency level enumeration
-CREATE TYPE urgency_level AS ENUM ('baixa', 'normal', 'alta', 'urgente');
+-- Notification types
+CREATE TYPE notification_type AS ENUM (
+    'service_created',
+    'proposal_received',
+    'proposal_accepted',
+    'proposal_rejected',
+    'service_started',
+    'service_completed',
+    'payment_received',
+    'review_received',
+    'message_received',
+    'system_update'
+);
 
--- Message type enumeration
-CREATE TYPE message_type_enum AS ENUM (
+-- Message types
+CREATE TYPE message_type AS ENUM (
     'text',
     'image',
     'file',
+    'location',
     'system'
 );
 
--- Review type enumeration
-CREATE TYPE review_type_enum AS ENUM (
+-- Review types
+CREATE TYPE review_type AS ENUM (
     'client_to_provider',
     'provider_to_client'
 );
