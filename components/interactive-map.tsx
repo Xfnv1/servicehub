@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
+import { useEffect, useRef, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -8,7 +8,18 @@ import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { MapPin, Star, Filter, Users, Navigation, Loader2, Phone, MessageCircle, CheckCircle } from "lucide-react"
+import {
+  MapPin,
+  Star,
+  Filter,
+  Users,
+  Navigation,
+  Loader2,
+  Phone,
+  MessageCircle,
+  CheckCircle,
+  Clock,
+} from "lucide-react"
 
 // Dados dos prestadores por estado
 const prestadoresPorEstado = {
@@ -29,6 +40,8 @@ const prestadoresPorEstado = {
       description: "Especialista em limpeza residencial com mais de 5 anos de experiência",
       avatar: "MS",
       online: true,
+      category: "Limpeza",
+      responseTime: "< 1h",
     },
     {
       id: 2,
@@ -46,6 +59,8 @@ const prestadoresPorEstado = {
       description: "Pintor profissional com trabalhos em residências e comércios",
       avatar: "CM",
       online: false,
+      category: "Pintura",
+      responseTime: "< 3h",
     },
   ],
   "Rio de Janeiro": [
@@ -65,6 +80,8 @@ const prestadoresPorEstado = {
       description: "Especialista em reparos elétricos, hidráulicos e marcenaria",
       avatar: "JS",
       online: true,
+      category: "Elétrica",
+      responseTime: "< 2h",
     },
   ],
   "Minas Gerais": [
@@ -84,6 +101,8 @@ const prestadoresPorEstado = {
       description: "Profissional de beleza com atendimento domiciliar",
       avatar: "AC",
       online: true,
+      category: "Beleza",
+      responseTime: "< 1h",
     },
   ],
   Bahia: [
@@ -103,6 +122,8 @@ const prestadoresPorEstado = {
       description: "Professor de matemática e física para ensino médio",
       avatar: "PO",
       online: false,
+      category: "Educação",
+      responseTime: "< 30min",
     },
   ],
   Paraná: [
@@ -122,6 +143,8 @@ const prestadoresPorEstado = {
       description: "Especialista em paisagismo e manutenção de jardins",
       avatar: "LF",
       online: true,
+      category: "Jardinagem",
+      responseTime: "< 2h",
     },
   ],
 }
@@ -157,17 +180,36 @@ const estadosBrasil = {
   Tocantins: { lat: -10.25, lng: -48.25 },
 }
 
+interface Service {
+  id: number
+  name: string
+  service: string
+  location: string
+  rating: number
+  reviews: number
+  price: string
+  distance: string
+  verified: boolean
+  lat: number
+  lng: number
+  avatar: string
+  online: boolean
+  category: string
+  responseTime: string
+}
+
 export function InteractiveMap() {
   const [searchTerm, setSearchTerm] = useState("")
   const [selectedState, setSelectedState] = useState("")
   const [selectedCity, setSelectedCity] = useState("")
-  const [filteredProviders, setFilteredProviders] = useState<any[]>([])
+  const [filteredProviders, setFilteredProviders] = useState<Service[]>([])
   const [mapLoaded, setMapLoaded] = useState(false)
   const [mapError, setMapError] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null)
-  const mapRef = useRef<any>(null)
+  const mapRef = useRef<HTMLDivElement>(null)
   const mapInstanceRef = useRef<any>(null)
+  const [selectedService, setSelectedService] = useState<Service | null>(null)
 
   // Carregar todos os prestadores
   const allProviders = Object.values(prestadoresPorEstado).flat()
@@ -244,6 +286,9 @@ export function InteractiveMap() {
             `
 
             marker.bindPopup(popupContent)
+            marker.on("click", () => {
+              setSelectedService(provider)
+            })
           })
 
           mapInstanceRef.current = map
@@ -467,6 +512,7 @@ export function InteractiveMap() {
                       <div
                         key={provider.id}
                         className="border rounded-xl p-4 hover:shadow-md transition-all duration-200 bg-white hover:bg-gray-50"
+                        onClick={() => setSelectedService(provider)}
                       >
                         <div className="flex items-start space-x-3 mb-3">
                           <div className="relative">
@@ -555,6 +601,57 @@ export function InteractiveMap() {
           </div>
         </div>
       </div>
+
+      {selectedService && (
+        <div className="mt-8">
+          <Card className="border-blue-200 bg-blue-50">
+            <CardContent className="p-4">
+              <div className="flex items-start justify-between">
+                <div className="flex items-start space-x-3">
+                  <div className="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center text-white font-semibold">
+                    {selectedService.avatar}
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="font-semibold text-gray-900">{selectedService.name}</h3>
+                    <p className="text-gray-600">{selectedService.service}</p>
+                    <div className="flex items-center mt-1 space-x-4">
+                      <div className="flex items-center">
+                        <Star className="w-4 h-4 text-yellow-400 fill-current" />
+                        <span className="text-sm text-gray-600 ml-1">{selectedService.rating}</span>
+                      </div>
+                      <div className="flex items-center">
+                        <MapPin className="w-4 h-4 text-gray-400" />
+                        <span className="text-sm text-gray-600 ml-1">{selectedService.distance}</span>
+                      </div>
+                      <div className="flex items-center">
+                        <Clock className="w-4 h-4 text-gray-400" />
+                        <span className="text-sm text-gray-600 ml-1">{selectedService.responseTime}</span>
+                      </div>
+                    </div>
+                    <div className="flex items-center mt-2">
+                      <Badge variant="outline">{selectedService.category}</Badge>
+                      <span className="text-lg font-semibold text-gray-900 ml-4">{selectedService.price}</span>
+                    </div>
+                  </div>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Button variant="outline" size="sm">
+                    <MessageCircle className="w-4 h-4 mr-2" />
+                    Chat
+                  </Button>
+                  <Button variant="outline" size="sm">
+                    <Phone className="w-4 h-4 mr-2" />
+                    Ligar
+                  </Button>
+                  <Button size="sm">Contratar</Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
     </section>
   )
 }
+
+export default InteractiveMap
