@@ -5,52 +5,22 @@ import { Header } from "@/components/header"
 import { Footer } from "@/components/footer"
 import { InteractiveMap } from "@/components/interactive-map"
 import { Button } from "@/components/ui/button"
+import { useServiceCategories, useSystemStats } from "@/hooks/use-database"
+import { Skeleton } from "@/components/ui/skeleton"
+import { Search, Zap, Users, Star, TrendingUp } from "lucide-react"
 
 export default function HomePage() {
   const router = useRouter()
+  const { categories, loading: categoriesLoading } = useServiceCategories()
+  const { stats, loading: statsLoading } = useSystemStats()
 
   const handleNavigation = (path: string) => {
     router.push(path)
   }
 
-  const categories = [
-    {
-      name: "Limpeza",
-      description: "Serviços de limpeza residencial e comercial",
-      icon: "fas fa-broom",
-      color: "text-blue-500",
-    },
-    {
-      name: "Reparos",
-      description: "Reparos gerais e manutenção",
-      icon: "fas fa-wrench",
-      color: "text-green-500",
-    },
-    {
-      name: "Pintura",
-      description: "Pintura residencial e comercial",
-      icon: "fas fa-paint-roller",
-      color: "text-yellow-500",
-    },
-    {
-      name: "Técnico",
-      description: "Serviços técnicos especializados",
-      icon: "fas fa-laptop",
-      color: "text-purple-500",
-    },
-    {
-      name: "Beleza",
-      description: "Serviços de beleza e estética",
-      icon: "fas fa-cut",
-      color: "text-pink-500",
-    },
-    {
-      name: "Educação",
-      description: "Aulas particulares e educação",
-      icon: "fas fa-graduation-cap",
-      color: "text-blue-600",
-    },
-  ]
+  const handleCategoryClick = (categoryName: string) => {
+    router.push(`/servicos?categoria=${categoryName.toLowerCase()}`)
+  }
 
   return (
     <div className="min-h-screen">
@@ -73,34 +43,59 @@ export default function HomePage() {
                 onClick={() => handleNavigation("/servicos")}
                 className="bg-white text-blue-600 hover:bg-gray-100 px-8 py-3 text-lg h-12 font-semibold"
               >
-                <i className="fas fa-search mr-2"></i>
+                <Search className="w-5 h-5 mr-2" />
                 Buscar Serviços
               </Button>
               <Button
                 onClick={() => handleNavigation("/solicitar-servico")}
                 className="bg-white text-blue-600 hover:bg-gray-100 px-8 py-3 text-lg h-12 font-semibold"
               >
+                <Zap className="w-5 h-5 mr-2" />
                 Solicitar Serviço
               </Button>
             </div>
 
+            {/* Dynamic Statistics */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-              <div className="text-center">
-                <div className="text-3xl md:text-4xl font-bold mb-2">4</div>
-                <div className="text-sm md:text-base opacity-80">Usuários Ativos</div>
-              </div>
-              <div className="text-center">
-                <div className="text-3xl md:text-4xl font-bold mb-2">2</div>
-                <div className="text-sm md:text-base opacity-80">Prestadores</div>
-              </div>
-              <div className="text-center">
-                <div className="text-3xl md:text-4xl font-bold mb-2">0</div>
-                <div className="text-sm md:text-base opacity-80">Serviços Concluídos</div>
-              </div>
-              <div className="text-center">
-                <div className="text-3xl md:text-4xl font-bold mb-2">4.9</div>
-                <div className="text-sm md:text-base opacity-80">Avaliação Média</div>
-              </div>
+              {statsLoading ? (
+                Array.from({ length: 4 }).map((_, i) => (
+                  <div key={i} className="text-center">
+                    <Skeleton className="h-10 w-16 mx-auto mb-2 bg-white/20" />
+                    <Skeleton className="h-4 w-24 mx-auto bg-white/20" />
+                  </div>
+                ))
+              ) : (
+                <>
+                  <div className="text-center">
+                    <div className="text-3xl md:text-4xl font-bold mb-2 flex items-center justify-center">
+                      <Users className="w-8 h-8 mr-2" />
+                      {Math.round(stats.active_users || 0)}
+                    </div>
+                    <div className="text-sm md:text-base opacity-80">Usuários Ativos</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-3xl md:text-4xl font-bold mb-2 flex items-center justify-center">
+                      <TrendingUp className="w-8 h-8 mr-2" />
+                      {Math.round(stats.active_providers || 0)}
+                    </div>
+                    <div className="text-sm md:text-base opacity-80">Prestadores</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-3xl md:text-4xl font-bold mb-2 flex items-center justify-center">
+                      <Zap className="w-8 h-8 mr-2" />
+                      {Math.round(stats.completed_services || 0)}
+                    </div>
+                    <div className="text-sm md:text-base opacity-80">Serviços Concluídos</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-3xl md:text-4xl font-bold mb-2 flex items-center justify-center">
+                      <Star className="w-8 h-8 mr-2" />
+                      {(stats.average_rating || 4.9).toFixed(1)}
+                    </div>
+                    <div className="text-sm md:text-base opacity-80">Avaliação Média</div>
+                  </div>
+                </>
+              )}
             </div>
           </div>
         </section>
@@ -113,23 +108,33 @@ export default function HomePage() {
               <p className="text-lg md:text-xl text-gray-600">Explore os serviços mais procurados na sua região</p>
             </div>
 
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-8">
-              {categories.map((category) => (
-                <div
-                  key={category.name}
-                  onClick={() => handleNavigation(`/servicos?categoria=${category.name.toLowerCase()}`)}
-                  className="text-center p-6 rounded-lg hover:shadow-lg transition-all cursor-pointer hover:bg-gray-50 group"
-                >
-                  <div
-                    className={`text-5xl md:text-6xl mb-4 ${category.color} group-hover:scale-110 transition-transform`}
-                  >
-                    <i className={category.icon}></i>
+            {categoriesLoading ? (
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-8">
+                {Array.from({ length: 6 }).map((_, i) => (
+                  <div key={i} className="text-center p-6 rounded-lg">
+                    <Skeleton className="w-16 h-16 mx-auto mb-4 rounded-full" />
+                    <Skeleton className="h-6 w-32 mx-auto mb-2" />
+                    <Skeleton className="h-4 w-48 mx-auto" />
                   </div>
-                  <h3 className="text-lg md:text-2xl font-semibold text-gray-900 mb-2">{category.name}</h3>
-                  <p className="text-gray-600 text-sm md:text-base leading-relaxed">{category.description}</p>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-8">
+                {categories.map((category) => (
+                  <div
+                    key={category.id}
+                    onClick={() => handleCategoryClick(category.name)}
+                    className="text-center p-6 rounded-lg hover:shadow-lg transition-all cursor-pointer hover:bg-gray-50 group"
+                  >
+                    <div className={`text-5xl md:text-6xl mb-4 group-hover:scale-110 transition-transform`}>
+                      {category.emoji || "🔧"}
+                    </div>
+                    <h3 className="text-lg md:text-2xl font-semibold text-gray-900 mb-2">{category.name}</h3>
+                    <p className="text-gray-600 text-sm md:text-base leading-relaxed">{category.description}</p>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </section>
 
@@ -147,7 +152,7 @@ export default function HomePage() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
               <div className="text-center">
                 <div className="bg-blue-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <i className="fas fa-edit text-2xl text-blue-600"></i>
+                  <Search className="w-8 h-8 text-blue-600" />
                 </div>
                 <h3 className="text-xl font-semibold text-gray-900 mb-2">Descreva o Serviço</h3>
                 <p className="text-gray-600">Conte-nos o que você precisa e onde</p>
@@ -155,7 +160,7 @@ export default function HomePage() {
 
               <div className="text-center">
                 <div className="bg-blue-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <i className="fas fa-envelope text-2xl text-blue-600"></i>
+                  <Users className="w-8 h-8 text-blue-600" />
                 </div>
                 <h3 className="text-xl font-semibold text-gray-900 mb-2">Receba Propostas</h3>
                 <p className="text-gray-600">Prestadores qualificados enviam orçamentos</p>
@@ -163,7 +168,7 @@ export default function HomePage() {
 
               <div className="text-center">
                 <div className="bg-blue-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <i className="fas fa-check-circle text-2xl text-blue-600"></i>
+                  <Star className="w-8 h-8 text-blue-600" />
                 </div>
                 <h3 className="text-xl font-semibold text-gray-900 mb-2">Escolha o Melhor</h3>
                 <p className="text-gray-600">Compare propostas e escolha o prestador</p>
@@ -171,7 +176,7 @@ export default function HomePage() {
 
               <div className="text-center">
                 <div className="bg-blue-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <i className="fas fa-thumbs-up text-2xl text-blue-600"></i>
+                  <TrendingUp className="w-8 h-8 text-blue-600" />
                 </div>
                 <h3 className="text-xl font-semibold text-gray-900 mb-2">Serviço Realizado</h3>
                 <p className="text-gray-600">Acompanhe o progresso e avalie</p>
@@ -188,7 +193,7 @@ export default function HomePage() {
               onClick={() => handleNavigation("/servicos")}
               className="bg-white text-blue-600 hover:bg-gray-100 px-8 py-3 text-lg font-semibold"
             >
-              <i className="fas fa-rocket mr-2"></i>
+              <Zap className="w-5 h-5 mr-2" />
               Solicitar Serviço Agora
             </Button>
           </div>

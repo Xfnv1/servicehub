@@ -24,11 +24,11 @@ ALTER TABLE audit_logs ENABLE ROW LEVEL SECURITY;
 -- =============================================================================
 
 -- Users can view their own profile
-CREATE POLICY "users_select_own" ON users
+CREATE POLICY "Users can view their own profile" ON users
     FOR SELECT USING (auth.uid() = id);
 
 -- Users can update their own profile
-CREATE POLICY "users_update_own" ON users
+CREATE POLICY "Users can update their own profile" ON users
     FOR UPDATE USING (auth.uid() = id);
 
 -- Users can insert their own profile (registration)
@@ -50,6 +50,10 @@ CREATE POLICY "users_select_clients_basic" ON users
         AND is_active = true
     );
 
+-- Public profiles are viewable
+CREATE POLICY "Public profiles are viewable" ON users
+    FOR SELECT USING (is_active = true);
+
 -- =============================================================================
 -- SERVICE CATEGORIES POLICIES
 -- =============================================================================
@@ -62,6 +66,10 @@ CREATE POLICY "service_categories_select_active" ON service_categories
 CREATE POLICY "service_categories_select_all" ON service_categories
     FOR SELECT USING (auth.role() = 'authenticated');
 
+-- Service categories are publicly readable
+CREATE POLICY "Service categories are publicly readable" ON service_categories
+    FOR SELECT USING (is_active = true);
+
 -- =============================================================================
 -- SERVICES POLICIES
 -- =============================================================================
@@ -71,11 +79,11 @@ CREATE POLICY "services_select_own_client" ON services
     FOR SELECT USING (auth.uid() = client_id);
 
 -- Clients can create services
-CREATE POLICY "services_insert_client" ON services
+CREATE POLICY "Clients can create services" ON services
     FOR INSERT WITH CHECK (auth.uid() = client_id);
 
 -- Clients can update their own services
-CREATE POLICY "services_update_own_client" ON services
+CREATE POLICY "Clients can update their own services" ON services
     FOR UPDATE USING (auth.uid() = client_id);
 
 -- Providers can view assigned services
@@ -115,6 +123,14 @@ CREATE POLICY "services_select_in_radius" ON services
         )
     );
 
+-- Users can view all active services
+CREATE POLICY "Users can view all active services" ON services
+    FOR SELECT USING (true);
+
+-- Providers can update accepted services
+CREATE POLICY "Providers can update accepted services" ON services
+    FOR UPDATE USING (auth.uid() = provider_id);
+
 -- =============================================================================
 -- PROPOSALS POLICIES
 -- =============================================================================
@@ -124,18 +140,11 @@ CREATE POLICY "proposals_select_own_provider" ON proposals
     FOR SELECT USING (auth.uid() = provider_id);
 
 -- Providers can create proposals
-CREATE POLICY "proposals_insert_provider" ON proposals
-    FOR INSERT WITH CHECK (
-        auth.uid() = provider_id
-        AND EXISTS (
-            SELECT 1 FROM services 
-            WHERE services.id = service_id 
-            AND services.status IN ('published', 'proposal_received')
-        )
-    );
+CREATE POLICY "Providers can create proposals" ON proposals
+    FOR INSERT WITH CHECK (auth.uid() = provider_id);
 
 -- Providers can update their own proposals
-CREATE POLICY "proposals_update_own_provider" ON proposals
+CREATE POLICY "Providers can update their own proposals" ON proposals
     FOR UPDATE USING (
         auth.uid() = provider_id 
         AND status IN ('pending', 'accepted')
@@ -162,6 +171,13 @@ CREATE POLICY "proposals_update_for_own_services" ON proposals
         AND status = 'pending'
     );
 
+-- Service owners and providers can view proposals
+CREATE POLICY "Service owners and providers can view proposals" ON proposals
+    FOR SELECT USING (
+        auth.uid() = provider_id OR 
+        auth.uid() IN (SELECT client_id FROM services WHERE id = service_id)
+    );
+
 -- =============================================================================
 -- REVIEWS POLICIES
 -- =============================================================================
@@ -171,9 +187,9 @@ CREATE POLICY "reviews_select_all" ON reviews
     FOR SELECT USING (true);
 
 -- Users can create reviews for services they participated in
-CREATE POLICY "reviews_insert_participant" ON reviews
+CREATE POLICY "Clients can create reviews for their services" ON reviews
     FOR INSERT WITH CHECK (
-        auth.uid() = reviewer_id
+        auth.uid() = client_id
         AND EXISTS (
             SELECT 1 FROM services 
             WHERE services.id = service_id 
@@ -186,8 +202,8 @@ CREATE POLICY "reviews_insert_participant" ON reviews
     );
 
 -- Users can update their own reviews
-CREATE POLICY "reviews_update_own" ON reviews
-    FOR UPDATE USING (auth.uid() = reviewer_id);
+CREATE POLICY "Users can update their own reviews" ON reviews
+    FOR UPDATE USING (auth.uid() = client_id OR auth.uid() = provider_id);
 
 -- Reviewed users can respond to reviews
 CREATE POLICY "reviews_respond" ON reviews
@@ -196,19 +212,23 @@ CREATE POLICY "reviews_respond" ON reviews
         AND response IS NULL
     );
 
+-- Reviews are publicly readable
+CREATE POLICY "Reviews are publicly readable" ON reviews
+    FOR SELECT USING (is_public = true);
+
 -- =============================================================================
 -- MESSAGES POLICIES
 -- =============================================================================
 
 -- Users can view messages they sent or received
-CREATE POLICY "messages_select_own" ON messages
+CREATE POLICY "Users can view their own messages" ON messages
     FOR SELECT USING (
         auth.uid() = sender_id 
         OR auth.uid() = receiver_id
     );
 
 -- Users can send messages
-CREATE POLICY "messages_insert_sender" ON messages
+CREATE POLICY "Users can send messages" ON messages
     FOR INSERT WITH CHECK (auth.uid() = sender_id);
 
 -- Users can update messages they received (mark as read)
@@ -219,12 +239,16 @@ CREATE POLICY "messages_update_receiver" ON messages
 CREATE POLICY "messages_update_sender" ON messages
     FOR UPDATE USING (auth.uid() = sender_id);
 
+-- Users can update their own messages
+CREATE POLICY "Users can update their own messages" ON messages
+    FOR UPDATE USING (auth.uid() = sender_id OR auth.uid() = receiver_id);
+
 -- =============================================================================
 -- NOTIFICATIONS POLICIES
 -- =============================================================================
 
 -- Users can view their own notifications
-CREATE POLICY "notifications_select_own" ON notifications
+CREATE POLICY "Users can view their own notifications" ON notifications
     FOR SELECT USING (auth.uid() = user_id);
 
 -- Users can update their own notifications (mark as read)
@@ -240,7 +264,7 @@ CREATE POLICY "notifications_insert_system" ON notifications
 -- =============================================================================
 
 -- Users can view payments they are involved in
-CREATE POLICY "payments_select_involved" ON payments
+CREATE POLICY "Users can view their own payments" ON payments
     FOR SELECT USING (
         auth.uid() = payer_id 
         OR auth.uid() = receiver_id
@@ -259,11 +283,11 @@ CREATE POLICY "payments_update_system" ON payments
 -- =============================================================================
 
 -- Users can view their own sessions
-CREATE POLICY "user_sessions_select_own" ON user_sessions
+CREATE POLICY "Users can view their own sessions" ON user_sessions
     FOR SELECT USING (auth.uid() = user_id);
 
 -- Users can update their own sessions
-CREATE POLICY "user_sessions_update_own" ON user_sessions
+CREATE POLICY "Users can update their own sessions" ON user_sessions
     FOR UPDATE USING (auth.uid() = user_id);
 
 -- System can manage sessions

@@ -8,158 +8,44 @@ import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { MapPin, Star, Filter, Users, Navigation } from "lucide-react"
-
-// Dados dos prestadores por estado
-const prestadoresPorEstado = {
-  "São Paulo": [
-    {
-      id: 1,
-      name: "Maria Silva",
-      service: "Limpeza Residencial",
-      location: "São Paulo, SP",
-      rating: 4.9,
-      reviews: 127,
-      price: "R$ 80/h",
-      distance: "2.1 km",
-      verified: true,
-      lat: -23.5505,
-      lng: -46.6333,
-      phone: "(11) 99999-1234",
-      description: "Especialista em limpeza residencial com mais de 5 anos de experiência",
-    },
-    {
-      id: 2,
-      name: "Carlos Mendes",
-      service: "Pintura Residencial",
-      location: "São Paulo, SP",
-      rating: 5.0,
-      reviews: 203,
-      price: "R$ 95/h",
-      distance: "1.8 km",
-      verified: true,
-      lat: -23.5489,
-      lng: -46.6388,
-      phone: "(11) 99999-5678",
-      description: "Pintor profissional com trabalhos em residências e comércios",
-    },
-  ],
-  "Rio de Janeiro": [
-    {
-      id: 3,
-      name: "João Santos",
-      service: "Reparos Gerais",
-      location: "Rio de Janeiro, RJ",
-      rating: 4.7,
-      reviews: 89,
-      price: "R$ 120/h",
-      distance: "3.5 km",
-      verified: true,
-      lat: -22.9068,
-      lng: -43.1729,
-      phone: "(21) 99999-9012",
-      description: "Especialista em reparos elétricos, hidráulicos e marcenaria",
-    },
-  ],
-  "Minas Gerais": [
-    {
-      id: 4,
-      name: "Ana Costa",
-      service: "Manicure e Pedicure",
-      location: "Belo Horizonte, MG",
-      rating: 4.8,
-      reviews: 156,
-      price: "R$ 60/h",
-      distance: "1.2 km",
-      verified: true,
-      lat: -19.9167,
-      lng: -43.9345,
-      phone: "(31) 99999-3456",
-      description: "Profissional de beleza com atendimento domiciliar",
-    },
-  ],
-  Bahia: [
-    {
-      id: 5,
-      name: "Pedro Oliveira",
-      service: "Professor Particular",
-      location: "Salvador, BA",
-      rating: 4.9,
-      reviews: 78,
-      price: "R$ 50/h",
-      distance: "2.8 km",
-      verified: false,
-      lat: -12.9714,
-      lng: -38.5014,
-      phone: "(71) 99999-7890",
-      description: "Professor de matemática e física para ensino médio",
-    },
-  ],
-  Paraná: [
-    {
-      id: 6,
-      name: "Lucia Fernandes",
-      service: "Jardinagem",
-      location: "Curitiba, PR",
-      rating: 4.6,
-      reviews: 92,
-      price: "R$ 70/h",
-      distance: "4.1 km",
-      verified: true,
-      lat: -25.4284,
-      lng: -49.2733,
-      phone: "(41) 99999-2468",
-      description: "Especialista em paisagismo e manutenção de jardins",
-    },
-  ],
-}
-
-// Estados brasileiros com coordenadas
-const estadosBrasil = {
-  Acre: { lat: -8.77, lng: -70.55 },
-  Alagoas: { lat: -9.71, lng: -35.73 },
-  Amapá: { lat: 1.41, lng: -51.77 },
-  Amazonas: { lat: -3.07, lng: -61.66 },
-  Bahia: { lat: -12.96, lng: -38.51 },
-  Ceará: { lat: -3.71, lng: -38.54 },
-  "Distrito Federal": { lat: -15.83, lng: -47.86 },
-  "Espírito Santo": { lat: -19.19, lng: -40.34 },
-  Goiás: { lat: -16.64, lng: -49.31 },
-  Maranhão: { lat: -2.55, lng: -44.3 },
-  "Mato Grosso": { lat: -12.64, lng: -55.42 },
-  "Mato Grosso do Sul": { lat: -20.51, lng: -54.54 },
-  "Minas Gerais": { lat: -19.92, lng: -43.94 },
-  Pará: { lat: -5.53, lng: -52.29 },
-  Paraíba: { lat: -7.06, lng: -35.55 },
-  Paraná: { lat: -24.89, lng: -51.55 },
-  Pernambuco: { lat: -8.28, lng: -35.07 },
-  Piauí: { lat: -8.28, lng: -43.68 },
-  "Rio de Janeiro": { lat: -22.84, lng: -43.15 },
-  "Rio Grande do Norte": { lat: -5.22, lng: -36.52 },
-  "Rio Grande do Sul": { lat: -30.01, lng: -51.22 },
-  Rondônia: { lat: -11.22, lng: -62.8 },
-  Roraima: { lat: 1.89, lng: -61.22 },
-  "Santa Catarina": { lat: -27.33, lng: -49.44 },
-  "São Paulo": { lat: -23.55, lng: -46.64 },
-  Sergipe: { lat: -10.9, lng: -37.07 },
-  Tocantins: { lat: -10.25, lng: -48.25 },
-}
+import { useProviders, useBrazilianLocations } from "@/hooks/use-database"
+import { Skeleton } from "@/components/ui/skeleton"
 
 export function NearbyServicesSection() {
   const [searchTerm, setSearchTerm] = useState("")
   const [selectedState, setSelectedState] = useState("")
   const [selectedCity, setSelectedCity] = useState("")
-  const [filteredProviders, setFilteredProviders] = useState<any[]>([])
   const [mapLoaded, setMapLoaded] = useState(false)
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null)
   const mapRef = useRef<any>(null)
   const mapInstanceRef = useRef<any>(null)
 
-  // Carregar todos os prestadores
-  const allProviders = Object.values(prestadoresPorEstado).flat()
+  // Use database hooks
+  const { providers, loading: providersLoading } = useProviders({ state: selectedState })
+  const { locations, loading: locationsLoading } = useBrazilianLocations()
 
-  useEffect(() => {
-    setFilteredProviders(allProviders)
-  }, [])
+  // Get unique states from locations
+  const states = locations.reduce((acc, location) => {
+    if (!acc.find((state) => state.name === location.state)) {
+      acc.push({
+        name: location.state,
+        code: location.state_code,
+        lat: location.latitude,
+        lng: location.longitude,
+      })
+    }
+    return acc
+  }, [] as any[])
+
+  // Filter providers based on search
+  const filteredProviders = providers.filter((provider) => {
+    if (!searchTerm) return true
+    return (
+      provider.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      provider.profession?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      provider.specialties?.some((specialty) => specialty.toLowerCase().includes(searchTerm.toLowerCase()))
+    )
+  })
 
   useEffect(() => {
     const loadMap = async () => {
@@ -201,32 +87,39 @@ export function NearbyServicesSection() {
             })
 
             // Adicionar marcadores dos prestadores
-            allProviders.forEach((provider) => {
-              const marker = L.marker([provider.lat, provider.lng], {
-                icon: provider.verified ? verifiedIcon : unverifiedIcon,
-              }).addTo(map)
+            providers.forEach((provider) => {
+              // Get coordinates from location string or use default
+              const coords = locations.find(
+                (loc) => provider.location?.includes(loc.city) || provider.location?.includes(loc.state),
+              )
 
-              // Popup com informações do prestador
-              const popupContent = `
-                <div style="min-width: 200px;">
-                  <h3 style="margin: 0 0 8px 0; font-size: 16px; font-weight: bold;">${provider.name}</h3>
-                  <p style="margin: 0 0 4px 0; color: #666; font-size: 14px;">${provider.service}</p>
-                  <p style="margin: 0 0 8px 0; color: #888; font-size: 12px;">📍 ${provider.location}</p>
-                  <div style="display: flex; align-items: center; margin-bottom: 8px;">
-                    <span style="color: #fbbf24; margin-right: 4px;">⭐</span>
-                    <span style="font-size: 14px; font-weight: bold;">${provider.rating}</span>
-                    <span style="color: #888; font-size: 12px; margin-left: 4px;">(${provider.reviews} avaliações)</span>
-                  </div>
-                  <p style="margin: 0 0 8px 0; font-size: 16px; font-weight: bold; color: #059669;">${provider.price}</p>
-                  <p style="margin: 0 0 12px 0; font-size: 12px; color: #666;">${provider.description}</p>
-                  <div style="display: flex; gap: 8px;">
-                    <button style="background: #3b82f6; color: white; border: none; padding: 6px 12px; border-radius: 4px; font-size: 12px; cursor: pointer;">Contratar</button>
-                    <button style="background: #6b7280; color: white; border: none; padding: 6px 12px; border-radius: 4px; font-size: 12px; cursor: pointer;">Chat</button>
-                  </div>
-                </div>
-              `
+              if (coords) {
+                const marker = L.marker([coords.latitude, coords.longitude], {
+                  icon: provider.is_verified ? verifiedIcon : unverifiedIcon,
+                }).addTo(map)
 
-              marker.bindPopup(popupContent)
+                // Popup com informações do prestador
+                const popupContent = `
+                  <div style="min-width: 200px;">
+                    <h3 style="margin: 0 0 8px 0; font-size: 16px; font-weight: bold;">${provider.name}</h3>
+                    <p style="margin: 0 0 4px 0; color: #666; font-size: 14px;">${provider.profession || "Prestador de Serviços"}</p>
+                    <p style="margin: 0 0 8px 0; color: #888; font-size: 12px;">📍 ${provider.location}</p>
+                    <div style="display: flex; align-items: center; margin-bottom: 8px;">
+                      <span style="color: #fbbf24; margin-right: 4px;">⭐</span>
+                      <span style="font-size: 14px; font-weight: bold;">${provider.average_rating?.toFixed(1) || "0.0"}</span>
+                      <span style="color: #888; font-size: 12px; margin-left: 4px;">(${provider.total_reviews || 0} avaliações)</span>
+                    </div>
+                    <p style="margin: 0 0 8px 0; font-size: 16px; font-weight: bold; color: #059669;">R$ ${provider.hourly_rate?.toFixed(2) || "0,00"}/h</p>
+                    <p style="margin: 0 0 12px 0; font-size: 12px; color: #666;">${provider.bio || provider.experience || "Prestador qualificado"}</p>
+                    <div style="display: flex; gap: 8px;">
+                      <button style="background: #3b82f6; color: white; border: none; padding: 6px 12px; border-radius: 4px; font-size: 12px; cursor: pointer;">Contratar</button>
+                      <button style="background: #6b7280; color: white; border: none; padding: 6px 12px; border-radius: 4px; font-size: 12px; cursor: pointer;">Chat</button>
+                    </div>
+                  </div>
+                `
+
+                marker.bindPopup(popupContent)
+              }
             })
 
             mapInstanceRef.current = map
@@ -238,7 +131,9 @@ export function NearbyServicesSection() {
       }
     }
 
-    loadMap()
+    if (!providersLoading && !locationsLoading) {
+      loadMap()
+    }
 
     return () => {
       if (mapInstanceRef.current) {
@@ -246,30 +141,10 @@ export function NearbyServicesSection() {
         mapInstanceRef.current = null
       }
     }
-  }, [])
+  }, [providers, locations, providersLoading, locationsLoading])
 
   const handleFilter = () => {
-    let filtered = allProviders
-
-    if (searchTerm) {
-      filtered = filtered.filter(
-        (provider) =>
-          provider.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          provider.service.toLowerCase().includes(searchTerm.toLowerCase()),
-      )
-    }
-
-    if (selectedState) {
-      filtered = filtered.filter((provider) => provider.location.includes(selectedState))
-    }
-
-    setFilteredProviders(filtered)
-
-    // Centralizar mapa no estado selecionado
-    if (selectedState && mapInstanceRef.current && estadosBrasil[selectedState as keyof typeof estadosBrasil]) {
-      const coords = estadosBrasil[selectedState as keyof typeof estadosBrasil]
-      mapInstanceRef.current.setView([coords.lat, coords.lng], 8)
-    }
+    // Filter is handled by the search term state
   }
 
   const handleMyLocation = () => {
@@ -359,18 +234,22 @@ export function NearbyServicesSection() {
               <div className="p-4 border-t bg-gray-50">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-4">
-                    <Select value={selectedState} onValueChange={setSelectedState}>
-                      <SelectTrigger className="w-48">
-                        <SelectValue placeholder="Selecionar Estado" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {Object.keys(estadosBrasil).map((estado) => (
-                          <SelectItem key={estado} value={estado}>
-                            {estado}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    {locationsLoading ? (
+                      <Skeleton className="h-10 w-48" />
+                    ) : (
+                      <Select value={selectedState} onValueChange={setSelectedState}>
+                        <SelectTrigger className="w-48">
+                          <SelectValue placeholder="Selecionar Estado" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {states.map((state) => (
+                            <SelectItem key={state.name} value={state.name}>
+                              {state.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
                     <Button variant="outline" onClick={handleMyLocation} className="bg-transparent">
                       <Navigation className="w-4 h-4 mr-2" />
                       Minha Localização
@@ -404,56 +283,90 @@ export function NearbyServicesSection() {
                 </div>
 
                 <div className="space-y-4">
-                  {filteredProviders.slice(0, 6).map((provider) => (
-                    <div key={provider.id} className="border rounded-lg p-4 hover:shadow-md transition-shadow">
-                      <div className="flex items-start justify-between mb-3">
-                        <div className="flex items-start space-x-3">
-                          <Avatar className="w-10 h-10">
-                            <AvatarImage src={`/placeholder.svg?height=40&width=40`} />
-                            <AvatarFallback className="bg-blue-500 text-white text-sm">
-                              {provider.name
-                                .split(" ")
-                                .map((n: string) => n[0])
-                                .join("")}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center">
-                              <h4 className="font-semibold text-gray-900 text-sm">{provider.name}</h4>
-                              {provider.verified && (
-                                <Badge className="ml-2 bg-green-100 text-green-800 text-xs">✓</Badge>
-                              )}
+                  {providersLoading
+                    ? Array.from({ length: 6 }).map((_, i) => (
+                        <div key={i} className="border rounded-lg p-4">
+                          <div className="flex items-start justify-between mb-3">
+                            <div className="flex items-start space-x-3">
+                              <Skeleton className="w-10 h-10 rounded-full" />
+                              <div className="flex-1">
+                                <Skeleton className="h-4 w-24 mb-1" />
+                                <Skeleton className="h-3 w-32 mb-1" />
+                                <Skeleton className="h-3 w-20" />
+                              </div>
                             </div>
-                            <p className="text-gray-600 text-sm">{provider.service}</p>
-                            <p className="text-gray-500 text-xs flex items-center mt-1">
-                              <MapPin className="w-3 h-3 mr-1" />
-                              {provider.location}
-                            </p>
+                            <div className="text-right">
+                              <Skeleton className="h-4 w-16 mb-1" />
+                              <Skeleton className="h-3 w-12" />
+                            </div>
+                          </div>
+                          <div className="flex items-center justify-between">
+                            <Skeleton className="h-3 w-24" />
+                            <Skeleton className="h-8 w-20" />
                           </div>
                         </div>
-                        <div className="text-right">
-                          <p className="font-bold text-green-600 text-sm">{provider.price}</p>
-                          <p className="text-gray-500 text-xs">{provider.distance}</p>
-                        </div>
-                      </div>
+                      ))
+                    : filteredProviders.slice(0, 6).map((provider) => (
+                        <div key={provider.id} className="border rounded-lg p-4 hover:shadow-md transition-shadow">
+                          <div className="flex items-start justify-between mb-3">
+                            <div className="flex items-start space-x-3">
+                              <Avatar className="w-10 h-10">
+                                <AvatarImage src={provider.avatar_url || `/placeholder.svg?height=40&width=40`} />
+                                <AvatarFallback className="bg-blue-500 text-white text-sm">
+                                  {provider.name
+                                    .split(" ")
+                                    .map((n: string) => n[0])
+                                    .join("")}
+                                </AvatarFallback>
+                              </Avatar>
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center">
+                                  <h4 className="font-semibold text-gray-900 text-sm">{provider.name}</h4>
+                                  {provider.is_verified && (
+                                    <Badge className="ml-2 bg-green-100 text-green-800 text-xs">✓</Badge>
+                                  )}
+                                </div>
+                                <p className="text-gray-600 text-sm">
+                                  {provider.profession || "Prestador de Serviços"}
+                                </p>
+                                <p className="text-gray-500 text-xs flex items-center mt-1">
+                                  <MapPin className="w-3 h-3 mr-1" />
+                                  {provider.location}
+                                </p>
+                              </div>
+                            </div>
+                            <div className="text-right">
+                              <p className="font-bold text-green-600 text-sm">
+                                R$ {provider.hourly_rate?.toFixed(2) || "0,00"}/h
+                              </p>
+                              <p className="text-gray-500 text-xs">{provider.work_radius || 10}km raio</p>
+                            </div>
+                          </div>
 
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center">
-                          <div className="flex text-yellow-400">
-                            {[...Array(5)].map((_, i) => (
-                              <Star key={i} className="w-3 h-3 fill-current" />
-                            ))}
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center">
+                              <div className="flex text-yellow-400">
+                                {[...Array(5)].map((_, i) => (
+                                  <Star
+                                    key={i}
+                                    className={`w-3 h-3 ${
+                                      i < Math.floor(provider.average_rating || 0)
+                                        ? "fill-current"
+                                        : "stroke-current fill-transparent"
+                                    }`}
+                                  />
+                                ))}
+                              </div>
+                              <span className="text-xs text-gray-600 ml-1">
+                                {(provider.average_rating || 0).toFixed(1)} ({provider.total_reviews || 0})
+                              </span>
+                            </div>
+                            <Button size="sm" className="text-xs px-3 py-1">
+                              Contratar
+                            </Button>
                           </div>
-                          <span className="text-xs text-gray-600 ml-1">
-                            {provider.rating} ({provider.reviews})
-                          </span>
                         </div>
-                        <Button size="sm" className="text-xs px-3 py-1">
-                          Contratar
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
+                      ))}
                 </div>
 
                 {filteredProviders.length > 6 && (

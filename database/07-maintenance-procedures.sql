@@ -80,6 +80,32 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+-- Procedure to clean up expired data
+CREATE OR REPLACE FUNCTION cleanup_expired_data()
+RETURNS void AS $$
+BEGIN
+    -- Clean up expired proposals
+    DELETE FROM proposals 
+    WHERE status = 'expired' 
+    AND created_at < NOW() - INTERVAL '30 days';
+    
+    -- Clean up old notifications
+    DELETE FROM notifications 
+    WHERE created_at < NOW() - INTERVAL '90 days'
+    AND is_read = true;
+    
+    -- Clean up expired sessions
+    DELETE FROM user_sessions 
+    WHERE expires_at < NOW();
+    
+    -- Clean up old messages (keep for 1 year)
+    DELETE FROM messages 
+    WHERE created_at < NOW() - INTERVAL '1 year';
+    
+    RAISE NOTICE 'Cleanup completed successfully';
+END;
+$$ language 'plpgsql';
+
 -- =============================================================================
 -- ANALYTICS AND REPORTING PROCEDURES
 -- =============================================================================
@@ -318,6 +344,88 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+-- Health check function
+CREATE OR REPLACE FUNCTION database_health_check()
+RETURNS TABLE(
+    check_name TEXT,
+    status TEXT,
+    details TEXT
+) AS $$
+BEGIN
+    -- Check for orphaned records
+    RETURN QUERY
+    SELECT 
+        'Orphaned Services'::TEXT,
+        CASE WHEN COUNT(*) = 0 THEN 'OK' ELSE 'WARNING' END::TEXT,
+        'Found ' || COUNT(*) || ' services without valid client'::TEXT
+    FROM services s
+    LEFT JOIN users u ON s.client_id = u.id
+    WHERE u.id IS NULL;
+    
+    -- Check for expired proposals
+    RETURN QUERY
+    SELECT 
+        'Expired Proposals'::TEXT,
+        CASE WHEN COUNT(*) = 0 THEN 'OK' ELSE 'INFO' END::TEXT,
+        'Found ' || COUNT(*) || ' expired proposals'::TEXT
+    FROM proposals
+    WHERE status = 'pending' AND expires_at < NOW();
+    
+    -- Check for inactive users with active services
+    RETURN QUERY
+    SELECT 
+        'Inactive Users with Active Services'::TEXT,
+        CASE WHEN COUNT(*) = 0 THEN 'OK' ELSE 'WARNING' END::TEXT,
+        'Found ' || COUNT(*) || ' inactive users with active services'::TEXT
+    FROM services s
+    JOIN users u ON s.client_id = u.id
+    WHERE u.is_active = false AND s.status IN ('novo', 'aceito', 'em_andamento');
+    
+END;
+$$ language 'plpgsql';
+
+-- =============================================================================
+-- SYSTEM STATISTICS UPDATE PROCEDURE
+-- =============================================================================
+
+-- Placeholder for update_system_stats function
+CREATE OR REPLACE FUNCTION update_system_stats()
+RETURNS VOID AS $$
+BEGIN
+    -- Implementation for updating system statistics
+    -- This is a placeholder and should be replaced with actual logic
+    RAISE NOTICE 'System statistics updated';
+END;
+$$ LANGUAGE plpgsql;
+
+-- =============================================================================
+-- PERFORMANCE OPTIMIZATION PROCEDURES
+-- =============================================================================
+
+-- Procedure to update all statistics
+CREATE OR REPLACE FUNCTION refresh_all_stats()
+RETURNS void AS $$
+BEGIN
+    -- Expire old proposals
+    PERFORM expire_old_proposals();
+    
+    -- Update system statistics
+    PERFORM update_system_stats();
+    
+    -- Update user last seen
+    UPDATE users 
+    SET last_seen = NOW() 
+    WHERE id IN (
+        SELECT DISTINCT user_id 
+        FROM user_sessions 
+        WHERE is_active = true 
+        AND expires_at > NOW()
+    );
+    
+    RAISE NOTICE 'All statistics refreshed successfully';
+END;
+$$ language 'plpgsql';
+
 -- =============================================================================
 -- SCHEDULED MAINTENANCE FUNCTION
 -- =============================================================================
@@ -375,6 +483,17 @@ BEGIN
     
     RETURN QUERY SELECT 
         'Update Table Statistics'::TEXT,
+        0,
+        end_time - start_time,
+        'COMPLETED'::TEXT;
+    
+    -- Refresh all statistics
+    start_time := NOW();
+    PERFORM refresh_all_stats();
+    end_time := NOW();
+    
+    RETURN QUERY SELECT 
+        'Refresh All Statistics'::TEXT,
         0,
         end_time - start_time,
         'COMPLETED'::TEXT;

@@ -6,7 +6,7 @@
 
 -- Enable required extensions
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
-CREATE EXTENSION IF NOT EXISTS "pgcrypto";
+CREATE EXTENSION IF NOT EXISTS "postgis";
 CREATE EXTENSION IF NOT EXISTS "pg_trgm";
 CREATE EXTENSION IF NOT EXISTS "unaccent";
 
@@ -15,63 +15,25 @@ CREATE EXTENSION IF NOT EXISTS "unaccent";
 -- =============================================================================
 
 -- User type enumeration
-CREATE TYPE user_type_enum AS ENUM (
-    'cliente',
-    'prestador'
-);
+CREATE TYPE user_type AS ENUM ('cliente', 'prestador');
 
 -- Service status enumeration with complete workflow
-CREATE TYPE service_status_enum AS ENUM (
-    'draft',           -- Service being created
-    'published',       -- Available for proposals
-    'proposal_received', -- Has at least one proposal
-    'assigned',        -- Provider assigned
-    'in_progress',     -- Work started
-    'completed',       -- Work finished
-    'cancelled',       -- Cancelled by client
-    'disputed'         -- Under dispute resolution
-);
+CREATE TYPE service_status AS ENUM ('novo', 'proposta_enviada', 'aceito', 'em_andamento', 'concluido', 'cancelado');
 
 -- Proposal status enumeration
-CREATE TYPE proposal_status_enum AS ENUM (
-    'pending',         -- Waiting for client response
-    'accepted',        -- Accepted by client
-    'rejected',        -- Rejected by client
-    'withdrawn',       -- Withdrawn by provider
-    'expired'          -- Expired due to time limit
-);
+CREATE TYPE proposal_status AS ENUM ('pending', 'accepted', 'rejected', 'expired');
 
 -- Notification type enumeration
-CREATE TYPE notification_type_enum AS ENUM (
-    'service_created',
-    'proposal_received',
-    'proposal_accepted',
-    'proposal_rejected',
-    'service_started',
-    'service_completed',
-    'payment_received',
-    'review_received',
-    'message_received',
-    'system_announcement'
-);
+CREATE TYPE notification_type AS ENUM ('service_request', 'message', 'payment', 'review', 'system', 'proposal');
 
 -- Payment status enumeration
-CREATE TYPE payment_status_enum AS ENUM (
-    'pending',
-    'processing',
-    'completed',
-    'failed',
-    'refunded',
-    'disputed'
-);
+CREATE TYPE payment_status AS ENUM ('pending', 'processing', 'completed', 'failed', 'refunded');
+
+-- Payment method enumeration
+CREATE TYPE payment_method AS ENUM ('credit_card', 'debit_card', 'pix', 'bank_transfer');
 
 -- Urgency level enumeration
-CREATE TYPE urgency_level_enum AS ENUM (
-    'low',
-    'normal',
-    'high',
-    'urgent'
-);
+CREATE TYPE urgency_level AS ENUM ('baixa', 'normal', 'alta', 'urgente');
 
 -- Message type enumeration
 CREATE TYPE message_type_enum AS ENUM (

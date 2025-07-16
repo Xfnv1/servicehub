@@ -1,86 +1,74 @@
 # ServiceHub Database - Complete Setup Guide
 
-This is a production-ready, enterprise-level database for the ServiceHub platform. Follow this guide step-by-step to deploy it to Supabase without any errors.
+## 🚀 Quick Start
 
-## 📋 Prerequisites
+### Step 1: Create Supabase Project
+1. Go to [supabase.com](https://supabase.com)
+2. Click "New Project"
+3. Choose your organization
+4. Fill in project details:
+   - **Name**: ServiceHub
+   - **Database Password**: (save this securely)
+   - **Region**: Choose closest to your users
+5. Click "Create new project"
+6. Wait for project initialization (2-3 minutes)
 
-- A Supabase account (free tier is sufficient for development)
-- Basic understanding of SQL
-- Access to Supabase Dashboard
+### Step 2: Execute Database Scripts
 
-## 🚀 Step-by-Step Deployment Guide
+**⚠️ IMPORTANT: Execute scripts in EXACT order!**
 
-### Step 1: Create Your Supabase Project
+1. Open your Supabase project dashboard
+2. Go to **SQL Editor** (left sidebar)
+3. Execute each script in order:
 
-1. **Go to [Supabase Dashboard](https://app.supabase.com)**
-2. **Click "New Project"**
-3. **Fill in the details:**
-   - Organization: Select your organization
-   - Name: `servicehub-production` (or your preferred name)
-   - Database Password: Generate a strong password and **SAVE IT**
-   - Region: Choose the closest to your users
-   - Pricing Plan: Select based on your needs
-
-4. **Click "Create new project"**
-5. **Wait for the project to be ready** (usually 2-3 minutes)
-
-### Step 2: Access the SQL Editor
-
-1. **In your Supabase project dashboard, click "SQL Editor" in the left sidebar**
-2. **You'll see the SQL Editor interface where you can run SQL commands**
-
-### Step 3: Execute the Database Scripts
-
-**IMPORTANT: Execute the scripts in the exact order shown below. Do not skip any steps.**
-
-#### 3.1 Extensions and Types
+#### Script 1: Extensions and Types
 \`\`\`sql
--- Copy and paste the entire content of: database/01-extensions-and-types.sql
+-- Copy content from 01-extensions-and-types.sql
 -- Click "Run" button
 \`\`\`
 
-#### 3.2 Core Tables
+#### Script 2: Core Tables
 \`\`\`sql
--- Copy and paste the entire content of: database/02-core-tables.sql
+-- Copy content from 02-core-tables.sql
 -- Click "Run" button
 \`\`\`
 
-#### 3.3 Indexes and Constraints
+#### Script 3: Indexes and Constraints
 \`\`\`sql
--- Copy and paste the entire content of: database/03-indexes-and-constraints.sql
+-- Copy content from 03-indexes-and-constraints.sql
 -- Click "Run" button
 \`\`\`
 
-#### 3.4 Functions and Triggers
+#### Script 4: Functions and Triggers
 \`\`\`sql
--- Copy and paste the entire content of: database/04-functions-and-triggers.sql
+-- Copy content from 04-functions-and-triggers.sql
 -- Click "Run" button
 \`\`\`
 
-#### 3.5 Row Level Security
+#### Script 5: Row Level Security
 \`\`\`sql
--- Copy and paste the entire content of: database/05-row-level-security.sql
+-- Copy content from 05-row-level-security.sql
 -- Click "Run" button
 \`\`\`
 
-#### 3.6 Seed Data (Optional - for development/testing)
+#### Script 6: Seed Data
 \`\`\`sql
--- Copy and paste the entire content of: database/06-seed-data.sql
+-- Copy content from 06-seed-data.sql
 -- Click "Run" button
 \`\`\`
 
-#### 3.7 Maintenance Procedures
+#### Script 7: Maintenance Procedures
 \`\`\`sql
--- Copy and paste the entire content of: database/07-maintenance-procedures.sql
+-- Copy content from 07-maintenance-procedures.sql
 -- Click "Run" button
 \`\`\`
 
-### Step 4: Verify the Installation
+### Step 3: Verify Installation
 
-After running all scripts, verify everything was created correctly:
+Run this verification query in SQL Editor:
 
 \`\`\`sql
--- Run this query to check all tables were created
+-- Verify all tables were created
 SELECT 
     schemaname,
     tablename,
@@ -88,172 +76,164 @@ SELECT
 FROM pg_tables 
 WHERE schemaname = 'public'
 ORDER BY tablename;
+
+-- Check sample data
+SELECT 'service_categories' as table_name, count(*) as records FROM service_categories
+UNION ALL
+SELECT 'brazilian_locations', count(*) FROM brazilian_locations
+UNION ALL
+SELECT 'users', count(*) FROM users
+UNION ALL
+SELECT 'system_stats', count(*) FROM system_stats;
+
+-- Run health check
+SELECT * FROM database_health_check();
 \`\`\`
 
-You should see these tables:
-- `audit_logs`
-- `messages`
-- `notifications`
-- `payments`
-- `proposals`
-- `reviews`
-- `service_categories`
-- `services`
-- `user_sessions`
-- `users`
+Expected results:
+- ✅ 11 tables created
+- ✅ 10 service categories
+- ✅ 20+ Brazilian locations
+- ✅ 8 sample users
+- ✅ 6 system statistics
+- ✅ All health checks return "OK"
 
-\`\`\`sql
--- Check if sample data was inserted (if you ran the seed script)
-SELECT 
-    'Users' as table_name, COUNT(*) as record_count FROM users
-UNION ALL
-SELECT 'Services', COUNT(*) FROM services
-UNION ALL
-SELECT 'Service Categories', COUNT(*) FROM service_categories
-UNION ALL
-SELECT 'Proposals', COUNT(*) FROM proposals
-UNION ALL
-SELECT 'Reviews', COUNT(*) FROM reviews
-UNION ALL
-SELECT 'Messages', COUNT(*) FROM messages
-UNION ALL
-SELECT 'Notifications', COUNT(*) FROM notifications;
+### Step 4: Configure Environment Variables
+
+Add these to your `.env.local`:
+
+\`\`\`env
+# Get these from Supabase Project Settings > API
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_key
+SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
 \`\`\`
 
-### Step 5: Configure Authentication (Important!)
+### Step 5: Enable Authentication
 
-1. **Go to Authentication > Settings in your Supabase dashboard**
-2. **Enable the authentication providers you want to use**
-3. **Set up your site URL and redirect URLs**
-
-### Step 6: Get Your Environment Variables
-
-1. **Go to Settings > API in your Supabase dashboard**
-2. **Copy these values for your application:**
-   - `Project URL` → `NEXT_PUBLIC_SUPABASE_URL`
-   - `anon public` key → `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-   - `service_role secret` key → `SUPABASE_SERVICE_ROLE_KEY` (keep this secret!)
-
-## 🔧 Database Features
-
-### Core Functionality
-- ✅ **Complete user management** (clients and service providers)
-- ✅ **Service categories** with hierarchical support
-- ✅ **Service lifecycle management** (draft → published → assigned → completed)
-- ✅ **Proposal system** with expiration and status tracking
-- ✅ **Review and rating system** (bidirectional)
-- ✅ **Real-time messaging** between users
-- ✅ **Notification system** with multiple types
-- ✅ **Payment tracking** with platform fees
-- ✅ **Audit logging** for important operations
-- ✅ **Session management** for security
-
-### Security Features
-- ✅ **Row Level Security (RLS)** on all tables
-- ✅ **Comprehensive policies** for data access control
-- ✅ **Input validation** with constraints and checks
-- ✅ **Audit trail** for sensitive operations
-- ✅ **Session tracking** and management
-
-### Performance Features
-- ✅ **Optimized indexes** for all common queries
-- ✅ **Full-text search** capabilities
-- ✅ **Geographic queries** support
-- ✅ **Composite indexes** for complex filtering
-- ✅ **Automatic statistics** updates
-
-### Maintenance Features
-- ✅ **Automated cleanup** procedures
-- ✅ **Health check** functions
-- ✅ **Performance monitoring** tools
-- ✅ **Data integrity** checks
-- ✅ **Backup preparation** functions
+1. Go to **Authentication** > **Settings**
+2. Configure providers (Email, Google, etc.)
+3. Set up email templates
+4. Configure redirect URLs
 
 ## 📊 Database Schema Overview
 
 ### Core Tables
-1. **users** - User profiles (clients and providers)
-2. **service_categories** - Hierarchical service categories
-3. **services** - Service requests and offerings
-4. **proposals** - Provider proposals for services
-5. **reviews** - Bidirectional rating system
-6. **messages** - Real-time messaging
-7. **notifications** - System notifications
-8. **payments** - Payment tracking
-9. **user_sessions** - Session management
-10. **audit_logs** - Audit trail
+- **users**: Both clients and service providers
+- **service_categories**: Service classification
+- **services**: Service requests and jobs
+- **proposals**: Provider bids on services
+- **reviews**: Rating and feedback system
+- **messages**: In-app messaging
+- **notifications**: User notifications
+- **payments**: Payment tracking
+- **user_sessions**: Session management
+- **system_stats**: Platform statistics
+- **brazilian_locations**: Geographic data
 
-### Key Relationships
-- Users can be clients or providers
-- Services belong to clients, can be assigned to providers
-- Proposals connect providers to services
-- Reviews are bidirectional (client↔provider)
-- Messages are linked to services
-- Notifications track all system events
+### Key Features
+- ✅ **Full-text search** on services
+- ✅ **Geographic queries** with PostGIS
+- ✅ **Automatic statistics** updates
+- ✅ **Row Level Security** for data protection
+- ✅ **Audit trails** and timestamps
+- ✅ **Performance optimized** with 50+ indexes
 
-## 🛠 Maintenance
+## 🔧 Maintenance
 
-### Regular Maintenance (Run Weekly)
+### Daily Tasks (Automated)
 \`\`\`sql
-SELECT * FROM run_maintenance();
+-- Run this daily via cron or scheduled function
+SELECT refresh_all_stats();
 \`\`\`
 
-### Health Checks (Run Daily)
+### Weekly Tasks
 \`\`\`sql
-SELECT * FROM check_database_health();
+-- Clean up expired data
+SELECT cleanup_expired_data();
+
+-- Health check
+SELECT * FROM database_health_check();
 \`\`\`
 
-### Platform Statistics
+### Monthly Tasks
 \`\`\`sql
-SELECT * FROM get_platform_statistics();
+-- Analyze table statistics
+ANALYZE;
+
+-- Vacuum tables
+VACUUM;
 \`\`\`
 
-## 🚨 Troubleshooting
+## 🛠 Troubleshooting
 
 ### Common Issues
 
-1. **"Extension does not exist" error**
-   - Make sure you're running the scripts in order
-   - Extensions must be created first
+**Error: "extension does not exist"**
+- Solution: Ensure PostGIS extension is enabled in Supabase
 
-2. **"Permission denied" error**
-   - You might need to run scripts as the database owner
-   - Check your Supabase project permissions
+**Error: "permission denied"**
+- Solution: Check RLS policies are correctly configured
 
-3. **"Relation does not exist" error**
-   - Tables must be created before indexes and constraints
-   - Follow the exact script order
+**Error: "relation does not exist"**
+- Solution: Verify scripts were run in correct order
 
-4. **RLS policy errors**
-   - Make sure all tables are created before applying RLS
-   - Check that auth.uid() is available in your context
+**Slow queries**
+- Solution: Check if indexes are being used with `EXPLAIN ANALYZE`
 
-### Getting Help
+### Performance Monitoring
 
-If you encounter any issues:
-1. Check the Supabase logs in your dashboard
-2. Verify you followed the exact script order
-3. Make sure all previous scripts completed successfully
-4. Check the Supabase documentation for any platform-specific requirements
+\`\`\`sql
+-- Check slow queries
+SELECT 
+    query,
+    calls,
+    total_time,
+    mean_time
+FROM pg_stat_statements 
+ORDER BY mean_time DESC 
+LIMIT 10;
 
-## 🎯 Next Steps
+-- Check index usage
+SELECT 
+    schemaname,
+    tablename,
+    indexname,
+    idx_scan,
+    idx_tup_read,
+    idx_tup_fetch
+FROM pg_stat_user_indexes
+ORDER BY idx_scan DESC;
+\`\`\`
 
-After successful deployment:
-1. **Test the database** with sample queries
-2. **Configure your application** with the environment variables
-3. **Set up your authentication** flow
-4. **Implement your business logic** using the provided functions
-5. **Set up monitoring** and alerts for production
+## 🔐 Security Best Practices
+
+1. **Never expose service role key** in client-side code
+2. **Use RLS policies** for all data access
+3. **Validate input** in application layer
+4. **Monitor for suspicious activity**
+5. **Regular security audits**
 
 ## 📈 Scaling Considerations
 
-This database is designed to scale with your application:
-- **Indexes** are optimized for common query patterns
-- **Partitioning** can be added for large tables if needed
-- **Read replicas** can be configured for high-traffic scenarios
-- **Connection pooling** is recommended for production
+- **Connection pooling**: Use PgBouncer for high traffic
+- **Read replicas**: For read-heavy workloads
+- **Partitioning**: For large tables (messages, notifications)
+- **Caching**: Implement Redis for frequently accessed data
+
+## 🆘 Support
+
+If you encounter issues:
+1. Check the troubleshooting section
+2. Verify all scripts ran successfully
+3. Check Supabase logs in dashboard
+4. Review RLS policies for permission issues
 
 ---
 
-**🎉 Congratulations! Your ServiceHub database is now ready for production use.**
+**Database Version**: 1.0.0  
+**Last Updated**: 2024  
+**Compatibility**: PostgreSQL 14+, Supabase
 \`\`\`
+
+Now I'll update the components to use the database instead of static data:
